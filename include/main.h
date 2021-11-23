@@ -5,7 +5,7 @@
 // serial pins and baud
 #define USART1_TX   PA9
 #define USART1_RX   PA10
-#define SERIAL_BAUD 115200
+#define SERIAL_BAUD 9600
 // pins
 #define ENCODER_CS_PIN           PA_4
 #define COIL_A_POWER_OUTPUT_PIN  PB_5
@@ -15,10 +15,8 @@
 #define COIL_B_DIR_1_PIN         PB_8
 #define COIL_B_DIR_2_PIN         PB_9
 // stepper configuration
-#define STEPS_PER_REVOLUTION     200
-#define MOTOR_CURRENT 1000
+#define MOTOR_CURRENT 1200
 #define MICROSTEPS    256
-#define STEP_ANGLE    1.8f
 #define PWM_FREQ      124000
 // Register locations
 #define ENCODER_READ_COMMAND  0x8000
@@ -77,6 +75,7 @@ ControlStatus mStatus = ControlStatus::NO_ERROR;
 // function declarations
 void setup();
 void loop();
+void step();
 void output(int32_t theta, uint16_t current);
 int16_t modulo(int32_t x, int16_t m);
 uint16_t currentToPWM(uint16_t current);

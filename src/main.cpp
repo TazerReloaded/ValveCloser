@@ -40,41 +40,7 @@ void loop() {
     if (micros() - mLastStep > STEP_INTERVAL) {
         // execute pending step if interval elapsed
         mLastStep = micros();
-        if (mTargetAngle < 0 || mStatus != ControlStatus::NO_ERROR) {
-            // angle not yet configured or pending error, disable motor
-            digitalWrite(COIL_A_DIR_1_PIN, LOW);
-            digitalWrite(COIL_A_DIR_2_PIN, LOW);
-            digitalWrite(COIL_B_DIR_1_PIN, LOW);
-            digitalWrite(COIL_B_DIR_2_PIN, LOW);
-            mDriving = false;
-        } else if (mOutputAngle > mTargetAngle + 1) {
-            // drive towards target CW
-            output(++mMotorPosition, MOTOR_CURRENT);
-            mSlackCompensation = MICROSTEPS;
-            mDriving = true;
-        } else if (mOutputAngle < mTargetAngle - 1) {
-            // drive towards target CCW
-            output(--mMotorPosition, MOTOR_CURRENT);
-            mSlackCompensation = -MICROSTEPS;
-            mDriving = true;
-        } else if (mSlackCompensation > 0) {
-            // drive a little more to compensate gear slack (CW)
-            output(++mMotorPosition, MOTOR_CURRENT);
-            mSlackCompensation--;
-            mDriving = true;
-        } else if (mSlackCompensation < 0) {
-            // drive a little more to compensate gear slack (CCW)
-            output(--mMotorPosition, MOTOR_CURRENT);
-            mSlackCompensation++;
-            mDriving = true;
-        } else {
-            // target angle reached, disable motor
-            digitalWrite(COIL_A_DIR_1_PIN, LOW);
-            digitalWrite(COIL_A_DIR_2_PIN, LOW);
-            digitalWrite(COIL_B_DIR_1_PIN, LOW);
-            digitalWrite(COIL_B_DIR_2_PIN, LOW);
-            mDriving = false;
-        }
+        step();
     }
 
     if (micros() - mLastSensorRead > ANGLE_INTERVAL) {
@@ -107,10 +73,19 @@ void loop() {
         // read incoming bytes from serial port
         int incoming = Serial.read();
         if (incoming >= 0 && incoming <= 100) {
-            mStatus = ControlStatus::NO_ERROR;
+            // set target angle and deviation from wanted angle
             mTargetAngle = 107.0f + incoming * 0.9f;
             mDeviation = abs(mTargetAngle - mOutputAngle);
             mLastStallCheck = millis();
+            // execute one step to set status byte
+            mLastStep = micros();
+            step();
+            // return status
+            if (mDriving) {
+                Serial.write(uint8_t(mStatus) | uint8_t(1 << 7));
+            } else {
+                Serial.write(uint8_t(mStatus));
+            }
         }
     }
 
@@ -147,6 +122,44 @@ void loop() {
         Serial.println();
     }
 #endif
+}
+
+void step() {
+    if (mTargetAngle < 0 || mStatus != ControlStatus::NO_ERROR) {
+        // angle not yet configured or pending error, disable motor
+        digitalWrite(COIL_A_DIR_1_PIN, LOW);
+        digitalWrite(COIL_A_DIR_2_PIN, LOW);
+        digitalWrite(COIL_B_DIR_1_PIN, LOW);
+        digitalWrite(COIL_B_DIR_2_PIN, LOW);
+        mDriving = false;
+    } else if (mOutputAngle > mTargetAngle + 1) {
+        // drive towards target CW
+        output(++mMotorPosition, MOTOR_CURRENT);
+        mSlackCompensation = MICROSTEPS;
+        mDriving = true;
+    } else if (mOutputAngle < mTargetAngle - 1) {
+        // drive towards target CCW
+        output(--mMotorPosition, MOTOR_CURRENT);
+        mSlackCompensation = -MICROSTEPS;
+        mDriving = true;
+    } else if (mSlackCompensation > 0) {
+        // drive a little more to compensate gear slack (CW)
+        output(++mMotorPosition, MOTOR_CURRENT);
+        mSlackCompensation--;
+        mDriving = true;
+    } else if (mSlackCompensation < 0) {
+        // drive a little more to compensate gear slack (CCW)
+        output(--mMotorPosition, MOTOR_CURRENT);
+        mSlackCompensation++;
+        mDriving = true;
+    } else {
+        // target angle reached, disable motor
+        digitalWrite(COIL_A_DIR_1_PIN, LOW);
+        digitalWrite(COIL_A_DIR_2_PIN, LOW);
+        digitalWrite(COIL_B_DIR_1_PIN, LOW);
+        digitalWrite(COIL_B_DIR_2_PIN, LOW);
+        mDriving = false;
+    }
 }
 
 void output(int32_t theta, uint16_t current) {
