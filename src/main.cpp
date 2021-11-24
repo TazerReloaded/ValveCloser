@@ -73,8 +73,8 @@ void loop() {
         // read incoming bytes from serial port
         int incoming = Serial.read();
         if (incoming >= 0 && incoming <= 100) {
-            // set target angle and deviation from wanted angle
-            mTargetAngle = 107.0f + incoming * 0.9f;
+            // set target angle and deviation from wanted percentage
+            mTargetAngle = 195.0f - incoming * 0.9f;
             mDeviation = abs(mTargetAngle - mOutputAngle);
             mLastStallCheck = millis();
             // execute one step to set status byte

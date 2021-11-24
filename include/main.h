@@ -5,7 +5,7 @@
 // serial pins and baud
 #define USART1_TX   PA9
 #define USART1_RX   PA10
-#define SERIAL_BAUD 9600
+#define SERIAL_BAUD 115200
 // pins
 #define ENCODER_CS_PIN           PA_4
 #define COIL_A_POWER_OUTPUT_PIN  PB_5
@@ -15,7 +15,7 @@
 #define COIL_B_DIR_1_PIN         PB_8
 #define COIL_B_DIR_2_PIN         PB_9
 // stepper configuration
-#define MOTOR_CURRENT 1200
+#define MOTOR_CURRENT 1000
 #define MICROSTEPS    256
 #define PWM_FREQ      124000
 // Register locations
