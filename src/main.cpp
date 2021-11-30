@@ -74,7 +74,7 @@ void loop() {
         int incoming = Serial.read();
         if (incoming >= 0 && incoming <= 100) {
             // set target angle and deviation from wanted percentage
-            mTargetAngle = 195.0f - incoming * 0.9f;
+            mTargetAngle = 190.0f - (incoming * 0.8f);
             mDeviation = abs(mTargetAngle - mOutputAngle);
             mLastStallCheck = millis();
             // execute one step to set status byte
@@ -222,23 +222,23 @@ void SystemClock_Config_HSE_8M_SYSCLK_72M(void) {
 
 // initialize TLE5012B
 void TLE5012B_init() {
-    // Set the chip select pin high, disabling the encoder's communication
+    // set the chip select pin high, disabling the encoder's communication
     pinMode(ENCODER_CS_PIN, OUTPUT);
     digitalWrite(ENCODER_CS_PIN, HIGH);
 
-    // Initialize communication pins as push/pull
+    // snitialize communication pins as push/pull
     GPIO_InitStructure.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
     GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Enable the clock for the SPI bus
+    // enable the clock for the SPI bus
     __HAL_RCC_SPI1_CLK_ENABLE();
 
-    // Set the peripheral to be used
+    // set the peripheral to be used
     mSPIConfig.Instance = SPI1;
 
-    // Configure the settings for transactions
+    // configure the settings for transactions
     mSPIConfig.Init.Direction = SPI_DIRECTION_2LINES;
     mSPIConfig.Init.Mode = SPI_MODE_MASTER;
     mSPIConfig.Init.DataSize = SPI_DATASIZE_8BIT;
@@ -249,7 +249,7 @@ void TLE5012B_init() {
     mSPIConfig.Init.FirstBit = SPI_FIRSTBIT_MSB;
     mSPIConfig.Init.CRCPolynomial = 7;
 
-    // Initialize the SPI bus with the parameters we set
+    // initialize the SPI bus with the parameters we set
     if (HAL_SPI_Init(&mSPIConfig) != HAL_OK) {
         mStatus = ControlStatus::SYSTEM_ERROR;
     }
@@ -270,16 +270,13 @@ void TLE5012B_read(uint16_t address, uint16_t* data) {
     HAL_SPI_TransmitReceive(&mSPIConfig, buf, buf, 2, 10);
 
     // set the MOSI pin to open drain
-    GPIO_InitStructure.Pin = GPIO_PIN_7;
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    LL_GPIO_SetPinMode(GPIOA, GPIO_PIN_7, GPIO_MODE_AF_OD);
 
     // send 0xFFs (like BTT code), this returns the data and overwrites the response buffer
     HAL_SPI_TransmitReceive(&mSPIConfig, &buf[2], &buf[2], 4, 10);
 
     // set MOSI back to Push/Pull
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    LL_GPIO_SetPinMode(GPIOA, GPIO_PIN_7, GPIO_MODE_AF_PP);
 
     // deselect encoder, enable interrupts
     digitalWrite(ENCODER_CS_PIN, HIGH);
