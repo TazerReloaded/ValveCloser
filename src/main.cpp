@@ -270,13 +270,17 @@ void TLE5012B_read(uint16_t address, uint16_t* data) {
     HAL_SPI_TransmitReceive(&mSPIConfig, buf, buf, 2, 10);
 
     // set the MOSI pin to open drain
-    LL_GPIO_SetPinMode(GPIOA, GPIO_PIN_7, GPIO_MODE_AF_OD);
+    GPIO_InitStructure.Pin = GPIO_PIN_7;
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // send 0xFFs (like BTT code), this returns the data and overwrites the response buffer
     HAL_SPI_TransmitReceive(&mSPIConfig, &buf[2], &buf[2], 4, 10);
 
     // set MOSI back to Push/Pull
-    LL_GPIO_SetPinMode(GPIOA, GPIO_PIN_7, GPIO_MODE_AF_PP);
+    GPIO_InitStructure.Pin = GPIO_PIN_7;
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // deselect encoder, enable interrupts
     digitalWrite(ENCODER_CS_PIN, HIGH);
